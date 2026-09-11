@@ -3,6 +3,10 @@ import {
   resolveManagedServiceUpdateFailureExitCode,
   type ControlPlaneUpdateSentinelMetaFile,
 } from "../../infra/update-control-plane-sentinel.js";
+import {
+  normalizeUpdateFailureFacts,
+  type UpdateFailureFact,
+} from "../../infra/update-failure-facts.js";
 import { verifyPackageUpdateRecovery } from "../../infra/update-global.js";
 import { getUpdateRun, recordUpdateRunPhase } from "../../infra/update-run-ledger.js";
 import { assertUpdateRecoveryAdmission } from "../../infra/update-run-recovery-admission.js";
@@ -185,6 +189,7 @@ export async function reportPreMutationUpdateFailure(params: {
   installKind: "git" | "package" | "unknown";
   reason: string;
   message?: string;
+  failureFacts?: readonly UpdateFailureFact[];
   opts: UpdateCommandOptions;
   controlPlaneUpdateSentinelMeta: ControlPlaneUpdateSentinelMetaFile["meta"] | null;
 }): Promise<never> {
@@ -211,7 +216,21 @@ export async function reportPreMutationUpdateFailure(params: {
               : verifyPackageUpdateRecovery(params.root)),
           }
         : {}),
-      steps: [],
+      steps: [
+        {
+          name: params.reason,
+          command: "openclaw update",
+          cwd: params.root,
+          durationMs: 0,
+          exitCode: 1,
+          failureFacts: normalizeUpdateFailureFacts(
+            params.failureFacts ?? [
+              { check: params.reason, code: params.reason, message: params.message },
+            ],
+            run?.env,
+          ),
+        },
+      ],
       durationMs: 0,
     },
     params.opts.run,

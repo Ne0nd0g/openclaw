@@ -15,6 +15,7 @@ import {
   resolveExtendedStablePackage,
   resolveNpmChannelTag,
 } from "../../infra/update-check.js";
+import type { UpdateFailureFact } from "../../infra/update-failure-facts.js";
 import {
   canResolveRegistryVersionForPackageTarget,
   createGlobalInstallEnv,
@@ -181,12 +182,17 @@ async function updateCommandInternal(
 
   let root = discoveredRoot;
   let updateInstallKind = installKind;
-  const refuseUpdate = (reason: string, message?: string) =>
+  const refuseUpdate = (
+    reason: string,
+    message?: string,
+    failureFacts?: readonly UpdateFailureFact[],
+  ) =>
     reportPreMutationUpdateFailure({
       root,
       installKind: updateInstallKind,
       reason,
       message,
+      failureFacts,
       opts,
       controlPlaneUpdateSentinelMeta,
     });

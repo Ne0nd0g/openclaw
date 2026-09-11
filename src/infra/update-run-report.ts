@@ -2,6 +2,7 @@ import { sliceUtf16Safe } from "@openclaw/normalization-core/utf16-slice";
 import { UPDATE_RUN_PHASES } from "../../packages/gateway-protocol/src/update-run-vocabulary.js";
 import { formatDurationPrecise } from "./format-time/format-duration.ts";
 import type { RestartSentinelPayload } from "./restart-sentinel-store.js";
+import { formatUpdateFailureFact, normalizeUpdateFailureFacts } from "./update-failure-facts.js";
 import {
   LEGACY_UPDATE_RUN_ADVISORY,
   LEGACY_UPDATE_RUN_EXPIRED_REASON,
@@ -147,6 +148,9 @@ export function renderUpdateRunReport(
   }
   for (const step of run.steps.filter((item) => item.status === "failed").slice(-3)) {
     lines.push(bounded(`Failed: ${step.step}${step.detail ? ` — ${step.detail}` : ""}`, 300));
+    lines.push(
+      ...normalizeUpdateFailureFacts(step.failureFacts ?? []).map(formatUpdateFailureFact),
+    );
   }
   for (const message of updateRunWarningMessages(run.steps).slice(-3)) {
     lines.push(`Warning: ${bounded(message, 500)}`);
@@ -264,6 +268,7 @@ export function updateRunReportInputFromSentinel(payload: RestartSentinelPayload
     steps: (stats?.steps ?? []).map((step) => ({
       step: step.name,
       status: step.log?.exitCode === 0 ? "completed" : "failed",
+      failureFacts: step.failureFacts,
     })),
   };
 }
