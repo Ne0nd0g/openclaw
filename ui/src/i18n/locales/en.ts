@@ -5455,6 +5455,8 @@ export const en: TranslationMap & {
       closeVideoPreview: "Close video preview",
     },
     modelControls: {
+      subscription: "Subscription",
+      api: "API",
       default: "Default",
       effort: "Effort",
       faster: "Faster",
